@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-Do App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@latest/dist/full.css" rel="stylesheet">
+</head>
+
+<body class="bg-gray-100 p-5">
+    <div class="max-w-xl mx-auto bg-white shadow-lg rounded-lg p-5">
+        <h2 class="text-xl text-black font-bold mb-3">To-Do List</h2>
+
+        <!-- Task Input -->
+        <form class="flex flex-wrap gap-2 mb-4">
+            <input id="taskInput" type="text" placeholder="Add a new task"
+                class="input input-bordered w-full bg-transparent border-accent text-black font-semibold" required />
+            <select id="taskPriority"
+                class="select select-bordered bg-transparent border-accent text-black font-semibold">
+                <option class="bg-transparent" value="low">Low</option>
+                <option class="bg-transparent" value="medium">Medium</option>
+                <option class="bg-transparent" value="high">High</option>
+            </select>
+            <input id="taskDueDate" type="date"
+                class="input input-bordered bg-accent/20 border-accent text-black font-semibold" required />
+            <button onclick="addTask()" class="btn btn-accent">Add</button>
+        </form>
+
+        <!-- Filters -->
+        <div class="flex flex-wrap gap-3 justify-between mb-4">
+            <select id="filterStatus"
+                class="select select-bordered bg-transparent border-accent text-black font-semibold"
+                onchange="renderTasks()">
+                <option value="all">All</option>
+                <option value="pending">Pending</option>
+                <option value="completed">Completed</option>
+            </select>
+            <select id="filterPriority"
+                class="select select-bordered bg-transparent border-accent text-black font-semibold"
+                onchange="renderTasks()">
+                <option value="all">All Priorities</option>
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+            </select>
+        </div>
+
+        <!-- Task List -->
+        <ul id="taskList" class="space-y-2"></ul>
+    </div>
+
+    <script>
+        document.querySelector("form").addEventListener("submit", (e) => {
+            e.preventDefault();
+        });
+
+        let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+
+        function renderTasks() {
+            const taskList = document.getElementById("taskList");
+            const filterStatus = document.getElementById("filterStatus").value;
+            const filterPriority = document.getElementById("filterPriority").value;
+
+            taskList.innerHTML = "";
+            tasks.filter(task =>
+                (filterStatus === "all" || (filterStatus === "completed" && task.completed) || (filterStatus === "pending" && !task.completed)) &&
+                (filterPriority === "all" || task.priority === filterPriority)
+            ).forEach((task, index) => {
+                taskList.innerHTML += `
+                    <li class="flex justify-between items-center bg-gray-200 p-2 rounded">
+                        <div>
+                            <span class="${task.completed ? 'line-through' : ''}">${task.title}</span>
+                            <span class="badge badge-${task.priority === 'high' ? 'error' : task.priority === 'medium' ? 'warning' : 'success'}">${task.priority}</span>
+                            <span class="text-xs text-gray-600">Due: ${task.dueDate || 'N/A'}</span>
+                        </div>
+                        <div>
+                            <button onclick="toggleTask(${index})" class="btn btn-xs ${task.completed ? 'btn-success' : 'btn-outline'}">✔</button>
+                            <button onclick="deleteTask(${index})" class="btn btn-xs btn-error">✖</button>
+                        </div>
+                    </li>
+                `;
+            });
+            localStorage.setItem("tasks", JSON.stringify(tasks));
+        }
+
+        function addTask() {
+            const taskInput = document.getElementById("taskInput");
+            const taskPriority = document.getElementById("taskPriority").value;
+            const taskDueDate = document.getElementById("taskDueDate").value;
+
+            if (taskInput.value.trim() !== "") {
+                tasks.push({
+                    title: taskInput.value,
+                    completed: false,
+                    priority: taskPriority,
+                    dueDate: taskDueDate
+                });
+                taskInput.value = "";
+                renderTasks();
+            }
+        }
+
+        function toggleTask(index) {
+            tasks[index].completed = !tasks[index].completed;
+            renderTasks();
+        }
+
+        function deleteTask(index) {
+            tasks.splice(index, 1);
+            renderTasks();
+        }
+
+        renderTasks();
+    </script>
+</body>
+
+</html>
